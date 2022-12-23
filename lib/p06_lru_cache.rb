@@ -19,13 +19,20 @@ class LRUCache
   end
 
   def get(key)
-    hash_key = @prc.call(key)
-    @store.each do |cache_node|
-      cache_node_key = cache_node.val
-      if cache_node_key == hash_key
-        @map.bucket(hash.key).get(key)
-      end
+    if @map[key]
+      node = @map[key]
+      self.update_node!(node)
+    else
+      self.calc!(key)
     end
+  #   hash_key = @prc.call(key)
+  #   @store.each do |cache_node|
+  #     cache_node_key = cache_node.val
+  #     if cache_node_key == hash_key
+  #       @map.bucket(hash.key).get(key)
+  #     end
+  #   end
+  # end
   end
 
   def to_s
@@ -36,15 +43,30 @@ class LRUCache
 
   def calc!(key)
     # suggested helper method; insert an (un-cached) key 
-    hash_value = @prc.call(key)
-    self.set(hash_value, key)
+    val = @prc.call(key)
+    node = @store.append(key,val)
+    @map[key] = node
+    self.eject! if self.count> @max
+    val
   end
 
   def update_node!(node)
     # suggested helper method; move a node to the end of the list
-
+    node.remove
+    @map[node.key]=@store.append(node.key, node.val)
+    
+    # node.prev.next =node.next
+    # node.next.prev = node.prev
+    # @tail.prev.next = node
+    # node.prev = @tail.prev
+    # node.next = @tail
+    # @tail.prev = node
   end
 
   def eject!
+    node = @store.first
+    node.remove
+    @map.delete(node.key)
+    nil
   end
 end
